@@ -25,21 +25,21 @@ type Explosion struct {
 }
 
 func NewExplosion(x, y float64) *Explosion {
-	particles := make([]Particle, 30)
+	particles := make([]Particle, ExplosionParticleCount)
 	
 	for i := range particles {
 		angle := rand.Float64() * 2 * math.Pi
-		speed := 2.0 + rand.Float64()*4.0
+		speed := ExplosionSpeedMin + rand.Float64()*(ExplosionSpeedMax-ExplosionSpeedMin)
 		
 		particles[i] = Particle{
 			X:       x,
 			Y:       y,
 			VelX:    math.Cos(angle) * speed,
 			VelY:    math.Sin(angle) * speed,
-			Life:    30,
-			MaxLife: 30,
-			Size:    2 + rand.Float64()*3,
-			Color:   color.RGBA{255, uint8(100 + rand.Intn(155)), 0, 255},
+			Life:    ExplosionParticleLife,
+			MaxLife: ExplosionParticleLife,
+			Size:    ExplosionParticleSizeMin + rand.Float64()*(ExplosionParticleSizeMax-ExplosionParticleSizeMin),
+			Color:   color.RGBA{255, uint8(ExplosionGreenMin + rand.Intn(ExplosionGreenMax-ExplosionGreenMin+1)), 0, 255},
 		}
 	}
 	
@@ -59,9 +59,9 @@ func (e *Explosion) Update() {
 		if e.Particles[i].Life > 0 {
 			e.Particles[i].X += e.Particles[i].VelX
 			e.Particles[i].Y += e.Particles[i].VelY
-			e.Particles[i].VelY += 0.2
-			e.Particles[i].VelX *= 0.98
-			e.Particles[i].VelY *= 0.98
+			e.Particles[i].VelY += ExplosionGravity
+			e.Particles[i].VelX *= ExplosionAirResistance
+			e.Particles[i].VelY *= ExplosionAirResistance
 			e.Particles[i].Life--
 			
 			lifeRatio := float64(e.Particles[i].Life) / float64(e.Particles[i].MaxLife)
@@ -83,22 +83,7 @@ func (e *Explosion) Draw(screen *ebiten.Image) {
 	
 	for _, p := range e.Particles {
 		if p.Life > 0 {
-			e.drawCircle(screen, p.X, p.Y, p.Size, p.Color)
-		}
-	}
-}
-
-func (e *Explosion) drawCircle(screen *ebiten.Image, cx, cy, radius float64, col color.RGBA) {
-	r2 := radius * radius
-	for y := -radius; y <= radius; y++ {
-		for x := -radius; x <= radius; x++ {
-			if x*x+y*y <= r2 {
-				px := int(cx + x)
-				py := int(cy + y)
-				if px >= 0 && px < ScreenWidth && py >= 0 && py < ScreenHeight {
-					screen.Set(px, py, col)
-				}
-			}
+			drawCircle(screen, p.X, p.Y, p.Size, p.Color)
 		}
 	}
 }

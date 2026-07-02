@@ -1,7 +1,12 @@
 package game
 
 import (
+	"log"
 	"math"
+	"os"
+	"strings"
+	"sync/atomic"
+	"time"
 
 	"github.com/hajimehoshi/ebiten/v2/audio"
 )
@@ -16,30 +21,53 @@ type AudioManager struct {
 	paddleHitSound  []byte
 	wallHitSound    []byte
 	scoreSound      []byte
-	enabled         bool
+	enabled         atomic.Bool
+}
+
+// isWSL checks if we're running under WSL
+func isWSL() bool {
+	// Check /proc/version for WSL
+	if data, err := os.ReadFile("/proc/version"); err == nil {
+		version := strings.ToLower(string(data))
+		if strings.Contains(version, "microsoft") || strings.Contains(version, "wsl") {
+			return true
+		}
+	}
+	
+	// Check WSL_DISTRO_NAME environment variable
+	if os.Getenv("WSL_DISTRO_NAME") != "" {
+		return true
+	}
+	
+	return false
 }
 
 // NewAudioManager creates a new audio manager
-func NewAudioManager() *AudioManager {
-	am := &AudioManager{
-		enabled: true,
+// Returns an error if audio initialization fails
+func NewAudioManager() (*AudioManager, error) {
+	am := &AudioManager{}
+	am.enabled.Store(false)
+	
+	// Disable audio on WSL by default (ALSA doesn't work well there)
+	if isWSL() {
+		log.Println("🔇 WSL detected: Audio disabled (use pong.exe for audio support)")
+		return am, nil
 	}
 	
-	// Try to initialize audio, but don't crash if it fails
-	defer func() {
-		if r := recover(); r != nil {
-			am.enabled = false
-		}
-	}()
-	
 	audioContext := audio.NewContext(sampleRate)
+	if audioContext == nil {
+		log.Println("⚠️  Audio initialization failed: context is nil")
+		return am, nil // Return disabled audio, not a fatal error
+	}
 	
 	am.audioContext = audioContext
 	am.paddleHitSound = generatePaddleHitSound()
 	am.wallHitSound = generateWallHitSound()
 	am.scoreSound = generateScoreSound()
+	am.enabled.Store(true)
+	log.Println("🔊 Audio initialized successfully")
 	
-	return am
+	return am, nil
 }
 
 func generatePaddleHitSound() []byte {
@@ -92,25 +120,121 @@ func generateScoreSound() []byte {
 }
 
 func (am *AudioManager) PlayPaddleHit() {
-	if !am.enabled || am.audioContext == nil {
+	if !am.enabled.Load() || am.audioContext == nil {
 		return
 	}
+	
+	// Protect against audio errors
+	defer func() {
+		if r := recover(); r != nil {
+			// Disable audio if playback fails
+			am.enabled.Store(false)
+			log.Printf("⚠️  Audio playback failed, disabling audio: %v\n", r)
+		}
+	}()
+	
 	player := am.audioContext.NewPlayerFromBytes(am.paddleHitSound)
+	if player == nil {
+		return
+	}
 	player.Play()
+	
+	go func() {
+		timeout := time.After(5 * time.Second)
+		ticker := time.NewTicker(10 * time.Millisecond)
+		defer ticker.Stop()
+		
+		for {
+			select {
+			case <-ticker.C:
+				if !player.IsPlaying() {
+					player.Close()
+					return
+				}
+			case <-timeout:
+				player.Close()
+				return
+			}
+		}
+	}()
 }
 
 func (am *AudioManager) PlayWallHit() {
-	if !am.enabled || am.audioContext == nil {
+	if !am.enabled.Load() || am.audioContext == nil {
 		return
 	}
+	
+	// Protect against audio errors
+	defer func() {
+		if r := recover(); r != nil {
+			// Disable audio if playback fails
+			am.enabled.Store(false)
+			log.Printf("⚠️  Audio playback failed, disabling audio: %v\n", r)
+		}
+	}()
+	
 	player := am.audioContext.NewPlayerFromBytes(am.wallHitSound)
+	if player == nil {
+		return
+	}
 	player.Play()
+	
+	go func() {
+		timeout := time.After(5 * time.Second)
+		ticker := time.NewTicker(10 * time.Millisecond)
+		defer ticker.Stop()
+		
+		for {
+			select {
+			case <-ticker.C:
+				if !player.IsPlaying() {
+					player.Close()
+					return
+				}
+			case <-timeout:
+				player.Close()
+				return
+			}
+		}
+	}()
 }
 
 func (am *AudioManager) PlayScore() {
-	if !am.enabled || am.audioContext == nil {
+	if !am.enabled.Load() || am.audioContext == nil {
 		return
 	}
+	
+	// Protect against audio errors
+	defer func() {
+		if r := recover(); r != nil {
+			// Disable audio if playback fails
+			am.enabled.Store(false)
+			log.Printf("⚠️  Audio playback failed, disabling audio: %v\n", r)
+		}
+	}()
+	
 	player := am.audioContext.NewPlayerFromBytes(am.scoreSound)
+	if player == nil {
+		return
+	}
 	player.Play()
+	
+	go func() {
+		timeout := time.After(5 * time.Second)
+		ticker := time.NewTicker(10 * time.Millisecond)
+		defer ticker.Stop()
+		
+		for {
+			select {
+			case <-ticker.C:
+				if !player.IsPlaying() {
+					player.Close()
+					return
+				}
+			case <-timeout:
+				player.Close()
+				return
+			}
+		}
+	}()
 }

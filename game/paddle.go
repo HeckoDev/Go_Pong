@@ -1,11 +1,10 @@
 package game
 
 import (
-	"image/color"
-
 	"github.com/hajimehoshi/ebiten/v2"
 )
 
+// Paddle represents a player's paddle with physics and movement
 type Paddle struct {
 	X            float64
 	Y            float64
@@ -18,25 +17,27 @@ type Paddle struct {
 	MaxSpeed     float64
 }
 
+// NewPaddle creates a new paddle at the specified position
 func NewPaddle(x, y float64) *Paddle {
 	return &Paddle{
 		X:            x,
 		Y:            y,
-		Width:        20,
-		Height:       100,
-		Speed:        6,
+		Width:        PaddleWidth,
+		Height:       PaddleHeight,
+		Speed:        PaddleSpeed,
 		VelocityY:    0,
-		Acceleration: 1.2,
-		Friction:     0.82,
-		MaxSpeed:     12,
+		Acceleration: PaddleAcceleration,
+		Friction:     PaddleFriction,
+		MaxSpeed:     PaddleMaxSpeed,
 	}
 }
 
+// Update updates paddle position with physics (friction, boundaries)
 func (p *Paddle) Update() {
 	p.Y += p.VelocityY
 	p.VelocityY *= p.Friction
 
-	if p.VelocityY > -0.1 && p.VelocityY < 0.1 {
+	if p.VelocityY > -PaddleMinVelocity && p.VelocityY < PaddleMinVelocity {
 		p.VelocityY = 0
 	}
 
@@ -50,6 +51,7 @@ func (p *Paddle) Update() {
 	}
 }
 
+// MoveUp accelerates the paddle upward
 func (p *Paddle) MoveUp() {
 	p.VelocityY -= p.Acceleration
 	if p.VelocityY < -p.MaxSpeed {
@@ -57,6 +59,7 @@ func (p *Paddle) MoveUp() {
 	}
 }
 
+// MoveDown accelerates the paddle downward
 func (p *Paddle) MoveDown() {
 	p.VelocityY += p.Acceleration
 	if p.VelocityY > p.MaxSpeed {
@@ -64,15 +67,15 @@ func (p *Paddle) MoveDown() {
 	}
 }
 
+// Draw renders the paddle to the screen
 func (p *Paddle) Draw(screen *ebiten.Image) {
-	white := color.RGBA{255, 255, 255, 255}
 	maxX := int(p.X + p.Width)
 	maxY := int(p.Y + p.Height)
 	
 	for x := int(p.X); x < maxX; x++ {
 		for y := int(p.Y); y < maxY; y++ {
 			if x >= 0 && x < ScreenWidth && y >= 0 && y < ScreenHeight {
-				screen.Set(x, y, white)
+				screen.Set(x, y, ColorForeground)
 			}
 		}
 	}

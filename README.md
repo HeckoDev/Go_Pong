@@ -61,7 +61,31 @@ A modern, feature-rich Pong game implementation in Go using the Ebiten game engi
 - **Go 1.21+**
 - **Linux**: X11 and ALSA development libraries
 
-#### Linux Dependencies (Debian/Ubuntu)
+### 🪟 WSL (Windows Subsystem for Linux) - **RECOMMANDÉ**
+
+Si vous êtes sur WSL, utilisez la version Windows pour un fonctionnement optimal :
+
+```bash
+# Configurer le proxy Go (nécessaire une seule fois)
+export GOPROXY="https://proxy.golang.org,direct"
+
+# Compiler pour Windows
+make build-windows
+
+# Lancer le jeu
+./pong.exe
+
+# OU créer un alias pour lancer depuis n'importe où
+echo "alias pong='cd /chemin/vers/PongMaster && ./pong.exe'" >> ~/.zshrc
+source ~/.zshrc
+pong
+```
+
+> **Note** : L'audio fonctionne parfaitement avec `pong.exe` sous WSL/Windows.
+
+### 🐧 Linux Natif
+
+#### Dépendances (Debian/Ubuntu)
 ```bash
 sudo apt-get update
 sudo apt-get install -y libx11-dev libxcursor-dev libxrandr-dev \
@@ -69,22 +93,19 @@ sudo apt-get install -y libx11-dev libxcursor-dev libxrandr-dev \
     libasound2-dev libasound2 libasound2-plugins alsa-utils
 ```
 
-### Quick Start
+#### Démarrage rapide
 ```bash
-# Clone the repository
-git clone <your-repo>
-cd PongMaster
-
-# Install Go dependencies
+# Installer les dépendances Go
+export GOPROXY="https://proxy.golang.org,direct"
 go mod tidy
 
-# Build and run (recommended)
+# Build et lancement (recommandé)
 make run
 
-# Or build only
+# OU compilation seule
 make build
 
-# Or run without building
+# OU exécution directe sans compilation
 make dev
 ```
 
@@ -203,14 +224,64 @@ go build -ldflags="-s -w" -o pong
 
 ## Troubleshooting
 
-### No Sound
-If you get ALSA errors:
+### 🚨 Erreur "401 Unauthorized" lors du build
+
+**Symptôme** : `github.com/ebitengine/oto/v3@v3.4.0: reading https://europe-west1-go.pkg.dev/... 401 Unauthorized`
+
+**Solution** : Configurer le proxy Go public
+```bash
+export GOPROXY="https://proxy.golang.org,direct"
+go clean -modcache
+go mod download
+```
+
+Pour rendre permanent, ajoutez à votre `~/.zshrc` ou `~/.bashrc` :
+```bash
+export GOPROXY="https://proxy.golang.org,direct"
+```
+
+### 🐧 WSL : Erreurs ALSA (Audio)
+
+**Symptôme** : `ALSA lib pcm.c: Unknown PCM default`
+
+**Solution recommandée** : Utilisez la version Windows
+```bash
+make build-windows
+./pong.exe
+```
+
+**Alternative** : Désactiver l'audio (Linux WSL)
+```bash
+export SDL_AUDIODRIVER=dummy
+./pong
+```
+
+### 🖼️ WSL : Erreurs X11/Display
+
+**Symptôme** : `Could not get authority info: open /home/user/.Xauthority: no such file or directory`
+
+**Solution** : Mettre à jour WSL pour avoir WSLg
+```powershell
+# Depuis PowerShell (Windows)
+wsl --update
+wsl --shutdown
+```
+
+Vérifier que WSLg est installé :
+```bash
+wsl.exe --version
+```
+
+### 🔇 Linux Natif : Pas de son
+
+Si vous n'avez pas de son sous Linux :
 ```bash
 sudo apt-get install libasound2 libasound2-plugins alsa-utils
 ```
 
-### X11 Errors
-If you get X11 library errors:
+### 📦 Linux Natif : Erreurs X11
+
+Si vous avez des erreurs de bibliothèques X11 :
 ```bash
 sudo apt-get install libx11-dev libxcursor-dev libxrandr-dev \
     libxinerama-dev libxi-dev libgl1-mesa-dev libxxf86vm-dev
