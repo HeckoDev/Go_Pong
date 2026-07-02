@@ -286,11 +286,3 @@ Si vous avez des erreurs de bibliothèques X11 :
 sudo apt-get install libx11-dev libxcursor-dev libxrandr-dev \
     libxinerama-dev libxi-dev libgl1-mesa-dev libxxf86vm-dev
 ```
-
-## License
-
-This project is free to use for educational purposes.
-
-## Credits
-
-Created with ❤️ using Go and Ebiten.
