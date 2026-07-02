@@ -1,0 +1,45 @@
+# PongMaster Configuration File
+
+[game]
+winning_score = 5
+max_velocity_y = 8.0
+
+[ball]
+size = 10.0
+base_speed = 4.0
+speed_increment = 0.3
+bounce_limit = 10
+max_trail_length = 20
+
+[paddle]
+width = 20.0
+height = 100.0
+speed = 6.0
+spin_factor = 5.0
+
+[explosion]
+particle_count = 20
+lifetime = 30
+base_velocity = 3.0
+
+[ai]
+# Easy: large deadzone, slow reactions
+easy_deadzone = 30.0
+easy_reaction_speed = 0.5
+
+# Medium: normal deadzone and reactions
+medium_deadzone = 10.0
+medium_reaction_speed = 1.0
+
+# Hard: small deadzone, prediction enabled
+hard_deadzone = 3.0
+hard_reaction_speed = 1.0
+hard_prediction_enabled = true
+
+[audio]
+enabled = true
+
+[video]
+width = 800
+height = 600
+fullscreen = false
